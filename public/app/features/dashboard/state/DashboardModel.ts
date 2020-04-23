@@ -10,11 +10,20 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { AppEvent, dateTime, DateTimeInput, isDateTime, PanelEvents, TimeRange, TimeZone, toUtc } from '@grafana/data';
-import { UrlQueryValue } from '@grafana/runtime';
+import {
+  AppEvent,
+  dateTime,
+  DateTimeInput,
+  isDateTime,
+  PanelEvents,
+  TimeRange,
+  TimeZone,
+  toUtc,
+  UrlQueryValue,
+} from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { getConfig } from '../../../core/config';
-import { getVariables } from 'app/features/variables/state/selectors';
+import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
@@ -51,6 +60,7 @@ export class DashboardModel {
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
+  panelInView: PanelModel;
 
   // ------------------
   // not persisted
@@ -69,9 +79,11 @@ export class DashboardModel {
     originalTime: true,
     originalTemplating: true,
     panelInEdit: true,
+    panelInView: true,
+    getVariablesFromState: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta) {
+  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
     if (!data) {
       data = {};
     }
@@ -143,8 +155,6 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
-    meta.fullscreen = false;
-    meta.isEditing = false;
 
     if (!this.editable) {
       meta.canEdit = false;
@@ -179,10 +189,20 @@ export class DashboardModel {
     }
 
     // get panel save models
-    copy.panels = _.chain(this.panels)
+    copy.panels = this.panels
       .filter((panel: PanelModel) => panel.type !== 'add-panel')
-      .map((panel: PanelModel) => panel.getSaveModel())
-      .value();
+      .map((panel: PanelModel) => {
+        // If we save while editing we should include the panel in edit mode instead of the
+        // unmodified source panel
+        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
+          const saveModel = this.panelInEdit.getSaveModel();
+          // while editing a panel we modify its id, need to restore it here
+          saveModel.id = this.panelInEdit.editSourceId;
+          return saveModel;
+        }
+
+        return panel.getSaveModel();
+      });
 
     //  sort by keys
     copy = sortByKeys(copy);
@@ -238,7 +258,7 @@ export class DashboardModel {
     defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
   ) {
     const originalVariables = this.originalTemplating;
-    const currentVariables = getVariables();
+    const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
       list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
@@ -260,15 +280,6 @@ export class DashboardModel {
         }
       }
     }
-  }
-
-  setViewMode(panel: PanelModel, fullscreen: boolean, isEditing: boolean) {
-    this.meta.fullscreen = fullscreen;
-    this.meta.isEditing = isEditing && this.meta.canEdit;
-
-    panel.setViewMode(fullscreen, this.meta.isEditing);
-
-    this.events.emit(PanelEvents.viewModeChanged, panel);
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
@@ -316,12 +327,22 @@ export class DashboardModel {
   }
 
   otherPanelInFullscreen(panel: PanelModel) {
-    return (this.meta.fullscreen && !panel.fullscreen) || this.panelInEdit;
+    return (this.panelInEdit || this.panelInView) && !(panel.isViewing || panel.isEditing);
   }
 
-  initPanelEditor(sourcePanel: PanelModel): PanelModel {
+  initEditPanel(sourcePanel: PanelModel): PanelModel {
     this.panelInEdit = sourcePanel.getEditClone();
     return this.panelInEdit;
+  }
+
+  initViewPanel(panel: PanelModel) {
+    this.panelInView = panel;
+    panel.setIsViewing(true);
+  }
+
+  exitViewPanel(panel: PanelModel) {
+    this.panelInView = undefined;
+    panel.setIsViewing(false);
   }
 
   exitPanelEditor() {
@@ -365,6 +386,10 @@ export class DashboardModel {
   }
 
   getPanelById(id: number): PanelModel {
+    if (this.panelInEdit && this.panelInEdit.id === id) {
+      return this.panelInEdit;
+    }
+
     for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;
@@ -940,12 +965,12 @@ export class DashboardModel {
       return;
     }
 
-    this.originalTemplating = this.cloneVariablesFrom(getVariables());
+    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState());
   }
 
   hasVariableValuesChanged() {
     if (getConfig().featureToggles.newVariables) {
-      return this.hasVariablesChanged(this.originalTemplating, getVariables());
+      return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
     }
 
     return this.hasVariablesChanged(this.originalTemplating, this.templating.list);
@@ -1019,7 +1044,7 @@ export class DashboardModel {
 
   getVariables = () => {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables();
+      return this.getVariablesFromState();
     }
     return this.templating.list;
   };
@@ -1029,7 +1054,7 @@ export class DashboardModel {
       return _.find(this.templating.list, { name: panel.repeat } as any);
     }
 
-    return getVariables().find(variable => variable.name === panel.repeat);
+    return this.getVariablesFromState().find(variable => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
@@ -1038,7 +1063,7 @@ export class DashboardModel {
 
   private hasVariables() {
     if (getConfig().featureToggles.newVariables) {
-      return getVariables().length > 0;
+      return this.getVariablesFromState().length > 0;
     }
     return this.templating.list.length > 0;
   }

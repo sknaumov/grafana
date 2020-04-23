@@ -2,7 +2,6 @@ import React from 'react';
 import { GrafanaTheme, PanelPluginMeta } from '@grafana/data';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import tinycolor from 'tinycolor2';
 
 interface Props {
   isCurrent: boolean;
@@ -31,8 +30,8 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     item: css`
-      background: ${theme.isLight ? theme.colors.white : theme.colors.gray05};
-      border: 1px solid ${theme.isLight ? theme.colors.gray3 : theme.colors.dark10};
+      background: ${theme.colors.bg2};
+      border: 1px solid ${theme.colors.border2};
       border-radius: 3px;
       height: 100px;
       width: 100%;
@@ -43,32 +42,27 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       display: flex;
       margin-right: 10px;
-      margin-bottom: 10px;
       align-items: center;
       justify-content: center;
       padding-bottom: 6px;
-      transition: transform 1 ease;
+
       &:hover {
-        box-shadow: 0 0 4px ${theme.colors.blueLight};
-        background: ${theme.isLight
-          ? tinycolor(theme.colors.blueBase)
-              .lighten(45)
-              .toHexString()
-          : tinycolor(theme.colors.blueBase)
-              .darken(46)
-              .toHexString()};
-        border: 1px solid ${theme.colors.blueLight};
+        box-shadow: 0 0 4px ${theme.palette.blue95};
+        border: 1px solid ${theme.palette.blue95};
       }
     `,
     current: css`
-      box-shadow: 0 0 6px ${theme.colors.orange} !important;
-      border: 1px solid ${theme.colors.orange} !important;
-      background: ${theme.isLight ? theme.colors.white : theme.colors.gray05};
+      box-shadow: 0 0 6px ${theme.palette.orange} !important;
+      border: 1px solid ${theme.palette.orange} !important;
     `,
     disabled: css`
       opacity: 0.2;
       filter: grayscale(1);
-      cursor: pointer;
+      cursor: default;
+      &:hover {
+        box-shadow: none;
+        border: 1px solid ${theme.colors.border2};
+      }
     `,
     name: css`
       text-overflow: ellipsis;

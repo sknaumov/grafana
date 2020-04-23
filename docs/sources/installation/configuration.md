@@ -81,8 +81,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 ## instance_name
 
-Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
+Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 
@@ -644,6 +643,8 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
 
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
+
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
@@ -849,7 +850,7 @@ for the full list. Environment variables will override any settings provided her
 
 ### address
 
-The host:port destination for reporting spans. (ex: `localhost:6381`)
+The host:port destination for reporting spans. (ex: `localhost:6831`)
 
 Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
 

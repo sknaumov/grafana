@@ -22,10 +22,7 @@ import {
   ReducerID,
   getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
-  VizOrientation,
 } from '@grafana/data';
-
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
@@ -49,7 +46,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     }
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+      <DataLinksContextMenu links={value.getLinks}>
         {({ openMenu, targetClassName }) => {
           return (
             <BigValue
@@ -96,24 +93,11 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         width={width}
         height={height}
         source={data}
+        itemSpacing={3}
         renderCounter={renderCounter}
-        orientation={getOrientation(width, height, options.orientation)}
+        autoGrid={true}
+        orientation={options.orientation}
       />
     );
-  }
-}
-
-/**
- * Stat panel custom auto orientation
- */
-function getOrientation(width: number, height: number, orientation: VizOrientation): VizOrientation {
-  if (orientation !== VizOrientation.Auto) {
-    return orientation;
-  }
-
-  if (width / height > 2) {
-    return VizOrientation.Vertical;
-  } else {
-    return VizOrientation.Horizontal;
   }
 }
