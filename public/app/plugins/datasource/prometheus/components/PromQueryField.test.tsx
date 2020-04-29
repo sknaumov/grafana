@@ -1,4 +1,53 @@
-import { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
+import { mount } from 'enzyme';
+import React from 'react';
+
+import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { PromOptions } from '../types';
+import { ButtonCascader } from '@grafana/ui';
+
+describe('PromQueryField', () => {
+  beforeAll(() => {
+    // @ts-ignore
+    window.getSelection = () => {};
+  });
+
+  it('does not render metrics chooser if no language provider exists', () => {
+    const queryField = mount(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{}}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
+
+    expect(queryField.find(ButtonCascader).length).toBe(0);
+  });
+
+  it('renders metrics chooser if a language provider exists', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+      },
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+
+    const queryField = mount(
+      <PromQueryField
+        // @ts-ignore
+        datasource={datasource}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
+
+    expect(queryField.find(ButtonCascader).length).toBe(1);
+  });
+});
 
 describe('groupMetricsByPrefix()', () => {
   it('returns an empty group for no metrics', () => {
