@@ -18,6 +18,7 @@ import {
 import {
   AdHocVariableModel,
   ConstantVariableModel,
+  CustomVariableModel,
   QueryVariableModel,
   VariableQueryEditorType,
   VariableQueryEditorProps,
@@ -36,6 +37,10 @@ export const isAdHoc = (model: VariableModel): model is AdHocVariableModel => {
 
 export const isConstant = (model: VariableModel): model is ConstantVariableModel => {
   return model.type === 'constant';
+};
+
+export const isCustom = (model: VariableModel): model is CustomVariableModel => {
+  return model.type === 'custom';
 };
 
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {

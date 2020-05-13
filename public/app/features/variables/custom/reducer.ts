@@ -10,6 +10,8 @@ export const initialCustomVariableModelState: CustomVariableModel = {
   multi: false,
   includeAll: false,
   allValue: null,
+  noclear: false,
+  editable: false,
   query: '',
   options: [],
   current: {} as VariableOption,

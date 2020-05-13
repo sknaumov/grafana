@@ -45,6 +45,8 @@ describe('custom actions', () => {
         query: 'A,B',
         multi: true,
         includeAll: false,
+        noclear: false,
+        editable: false,
       };
 
       const tester = await reduxTester<RootReducerType>()

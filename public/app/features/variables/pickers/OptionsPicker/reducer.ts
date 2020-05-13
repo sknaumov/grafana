@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString, trim } from 'lodash';
-import { VariableOption, VariableWithOptions } from '../../types';
-import { isMulti, isQuery } from '../../guard';
+import { VariableOption, VariableWithOptions, CustomVariableModel } from '../../types';
+import { isMulti, isQuery, isCustom } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { containsSearchFilter } from '../../utils';
+import { formatVariableLabel } from '../../shared/formatVariable';
 import { ALL_VARIABLE_VALUE } from '../../constants';
 
 export interface ToggleOption {
@@ -19,6 +20,8 @@ export interface OptionsPickerState {
   highlightIndex: number;
   options: VariableOption[];
   multi: boolean;
+  noclear: boolean;
+  editable: boolean;
 }
 
 export const initialState: OptionsPickerState = {
@@ -28,6 +31,8 @@ export const initialState: OptionsPickerState = {
   selectedValues: [],
   options: [],
   multi: false,
+  noclear: false,
+  editable: false,
 };
 
 export const OPTIONS_LIMIT = 1000;
@@ -104,6 +109,29 @@ const updateAllSelection = (state: OptionsPickerState): OptionsPickerState => {
   return state;
 };
 
+const updateCustomOption = (state: OptionsPickerState): OptionsPickerState => {
+  if (!state.editable) {
+    return state;
+  }
+
+  // delete previously-added option if any
+  let options = state.options.filter((option) => { return !option.custom });
+
+  const str = state.queryValue;
+  const match = options.filter((option) => {
+    return option.text === str;
+  });
+  if (match.length === 0) {
+    // add str to options and deselect all the other options if any
+    options = options.map((option) => ({ ...option, selected: false }));
+    options.unshift({ text: str, value: str, selected: true, custom: true });
+  }
+
+  state.options = options;
+  state.selectedValues = options.filter((option) => option.selected);
+  return state;
+};
+
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState,
@@ -119,6 +147,16 @@ const optionsPickerSlice = createSlice({
 
       if (isMulti(action.payload)) {
         state.multi = action.payload.multi ?? false;
+      }
+
+      if (isCustom(action.payload)) {
+        const payload = action.payload as CustomVariableModel;
+        const { noclear, editable } = payload;
+        state.noclear = noclear ?? false;
+        state.editable = editable ?? false;
+        if (noclear) {
+          state.queryValue = formatVariableLabel(payload);
+        }
       }
 
       if (isQuery(action.payload)) {
@@ -204,7 +242,7 @@ const optionsPickerSlice = createSlice({
 
       state.highlightIndex = 0;
 
-      return applyStateChanges(state, updateDefaultSelection, updateOptions);
+      return applyStateChanges(state, updateCustomOption, updateDefaultSelection, updateOptions);
     },
     updateOptionsFromSearch: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
       state.options = action.payload;

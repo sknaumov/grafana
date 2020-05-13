@@ -67,7 +67,10 @@ export interface IntervalVariableModel extends VariableWithOptions {
   refresh: VariableRefresh;
 }
 
-export interface CustomVariableModel extends VariableWithMultiSupport {}
+export interface CustomVariableModel extends VariableWithMultiSupport {
+  noclear: boolean;
+  editable: boolean;
+}
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
   regex: string;
