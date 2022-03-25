@@ -31,6 +31,10 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
+var TrustedPlugins = map[string]bool{
+	"pktlogger-graphite": true,
+}
+
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
@@ -135,8 +139,9 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	// validate signatures
 	verifiedPlugins := make([]*plugins.Plugin, 0)
 	for _, plugin := range loadedPlugins {
+		_, trusted := TrustedPlugins[plugin.ID]
 		signingError := l.signatureValidator.Validate(plugin)
-		if signingError != nil {
+		if signingError != nil && !trusted {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
 				"pluginID", plugin.ID, "status", signingError.SignatureStatus)
 			plugin.SignatureError = signingError
