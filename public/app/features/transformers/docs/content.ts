@@ -1210,6 +1210,40 @@ This transformation simplifies the process and enhances the flexibility of visua
   `;
     },
   },
+  pivot: {
+    name: 'Pivot',
+    getHelperDocs: function () {
+      return `
+Use this transformation to use 2 columns as names and values and pivot them, keeping all the other columns intact.
+
+**Original data**
+
+| Year | Serie   | Value | Report            |
+| ---- | ------- | ----- | ----------------- |
+| 2024 | Revenue |   100 | 2024.xls          |
+| 2024 | Profit  |    10 | 2024.xls          |
+| 2024 | Taxes   |    20 | 2024.xls          |
+| 2025 | Revenue |   120 | 2025-revenue.xlsx |
+| 2025 | Profit  |     5 | 2025-profit.xlsx  |
+| 2025 | Taxes   |    30 | 2025-taxes.xlsx   |
+
+The following output is a result of pivoting 'Serie' column as new columns names and 'Value' column as corresponding new cells content, using any of the following values for empty cells: **Null**, **True**, **False**, **Zero** or **Empty**.
+
+**Output**
+
+| Year | Report            | Revenue | Profit | Taxes |
+| ---- | ----------------- | ------- | ------ | ----- |
+| 2024 | 2024.xls          |     100 |        |       |
+| 2024 | 2024.xls          |         |     10 |       |
+| 2024 | 2024.xls          |         |        |    20 |
+| 2025 | 2025-revenue.xlsx |     120 |        |       |
+| 2025 | 2025-profit.xlsx  |         |      5 |       |
+| 2025 | 2025-taxes.xlsx   |         |        |    30 |
+
+This transformation could be useful to adjust format of multi-series data for TimeSeries Panel, while keeping metadata to create override per graph point.
+  `;
+    },
+  },
   prepareTimeSeries: {
     name: 'Prepare time series',
     getHelperDocs: function () {

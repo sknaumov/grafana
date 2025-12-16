@@ -25,6 +25,7 @@ import { renameByRegexTransformer } from './transformers/renameByRegex';
 import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { sortByTransformer } from './transformers/sortBy';
 import { transposeTransformer } from './transformers/transpose';
+import { pivotTransformer } from './transformers/pivot';
 
 export const standardTransformers = {
   noopTransformer,
@@ -57,4 +58,5 @@ export const standardTransformers = {
   limitTransformer,
   groupToNestedTable,
   transposeTransformer,
+  pivotTransformer,
 };
