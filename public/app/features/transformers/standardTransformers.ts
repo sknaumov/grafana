@@ -33,6 +33,7 @@ import { getRegressionTransformerRegistryItem } from './regression/regressionEdi
 import { getRowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { getSpatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { getTimeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
+import { getPivotTransformRegistryItem } from './editors/PivotTransformerEditor';
 
 export const getStandardTransformers = (): TransformerRegistryItem[] => {
   return [
@@ -69,5 +70,6 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     getFormatTimeTransformerRegistryItem(),
     getTimeSeriesTableTransformRegistryItem(),
     getTransposeTransformerRegistryItem(),
+    getPivotTransformRegistryItem(),
   ];
 };
